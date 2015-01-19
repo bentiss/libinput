@@ -270,7 +270,7 @@ static const char*
 tablet_axis_changed_sym(struct libinput_event_tablet *t,
 			enum libinput_tablet_axis axis)
 {
-	if (libinput_event_tablet_axis_has_changed(t, axis))
+	if (libinput_event_tablet_has_axis(t, axis))
 		return "*";
 	else
 		return "";

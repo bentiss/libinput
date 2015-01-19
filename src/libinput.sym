@@ -130,7 +130,7 @@ global:
 	/* tablet APIs, they are not part of any stable API promise yet.
 	 * keep them separate */
 	libinput_event_get_tablet_event;
-	libinput_event_tablet_axis_has_changed;
+	libinput_event_tablet_has_axis;
 	libinput_event_tablet_get_axis_value;
 	libinput_event_tablet_get_button;
 	libinput_event_tablet_get_button_state;

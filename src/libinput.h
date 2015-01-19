@@ -999,8 +999,8 @@ libinput_event_touch_get_base_event(struct libinput_event_touch *event);
  * @return 1 if the axis was updated or 0 otherwise
  */
 int
-libinput_event_tablet_axis_has_changed(struct libinput_event_tablet *event,
-				       enum libinput_tablet_axis axis);
+libinput_event_tablet_has_axis(struct libinput_event_tablet *event,
+			       enum libinput_tablet_axis axis);
 
 /**
  * @ingroup event_tablet

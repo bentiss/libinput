@@ -559,7 +559,7 @@ libinput_event_touch_get_y(struct libinput_event_touch *event)
 }
 
 LIBINPUT_EXPORT int
-libinput_event_tablet_axis_has_changed(struct libinput_event_tablet *event,
+libinput_event_tablet_has_axis(struct libinput_event_tablet *event,
 				       enum libinput_tablet_axis axis)
 {
 	return (NCHARS(axis) <= sizeof(event->changed_axes)) ?

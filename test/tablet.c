@@ -175,9 +175,9 @@ START_TEST(motion)
 			bool x_changed, y_changed;
 			double reported_x, reported_y;
 
-			x_changed = libinput_event_tablet_axis_has_changed(
+			x_changed = libinput_event_tablet_has_axis(
 			    tablet_event, LIBINPUT_TABLET_AXIS_X);
-			y_changed = libinput_event_tablet_axis_has_changed(
+			y_changed = libinput_event_tablet_has_axis(
 			    tablet_event, LIBINPUT_TABLET_AXIS_Y);
 
 			ck_assert(x_changed);
@@ -211,9 +211,9 @@ START_TEST(motion)
 			type = libinput_event_get_type(event);
 
 			if (type == LIBINPUT_EVENT_TABLET_AXIS) {
-				x_changed = libinput_event_tablet_axis_has_changed(
+				x_changed = libinput_event_tablet_has_axis(
 				    tablet_event, LIBINPUT_TABLET_AXIS_X);
-				y_changed = libinput_event_tablet_axis_has_changed(
+				y_changed = libinput_event_tablet_has_axis(
 				    tablet_event, LIBINPUT_TABLET_AXIS_Y);
 
 				ck_assert(x_changed);
@@ -392,7 +392,7 @@ START_TEST(normalization)
 		if (libinput_event_get_type(event) == LIBINPUT_EVENT_TABLET_AXIS) {
 			tablet_event = libinput_event_get_tablet_event(event);
 
-			if (libinput_event_tablet_axis_has_changed(
+			if (libinput_event_tablet_has_axis(
 				tablet_event,
 				LIBINPUT_TABLET_AXIS_PRESSURE)) {
 				pressure = libinput_event_tablet_get_axis_value(
@@ -401,7 +401,7 @@ START_TEST(normalization)
 				litest_assert_double_eq(pressure, 0);
 			}
 
-			if (libinput_event_tablet_axis_has_changed(
+			if (libinput_event_tablet_has_axis(
 				tablet_event,
 				LIBINPUT_TABLET_AXIS_TILT_X)) {
 				tilt_vertical =
@@ -412,7 +412,7 @@ START_TEST(normalization)
 				litest_assert_double_eq(tilt_vertical, -1);
 			}
 
-			if (libinput_event_tablet_axis_has_changed(
+			if (libinput_event_tablet_has_axis(
 				tablet_event,
 				LIBINPUT_TABLET_AXIS_TILT_Y)) {
 				tilt_horizontal =
@@ -454,7 +454,7 @@ START_TEST(normalization)
 		if (libinput_event_get_type(event) == LIBINPUT_EVENT_TABLET_AXIS) {
 			tablet_event = libinput_event_get_tablet_event(event);
 
-			if (libinput_event_tablet_axis_has_changed(
+			if (libinput_event_tablet_has_axis(
 				tablet_event,
 				LIBINPUT_TABLET_AXIS_PRESSURE)) {
 				pressure = libinput_event_tablet_get_axis_value(
@@ -463,7 +463,7 @@ START_TEST(normalization)
 				litest_assert_double_eq(pressure, 1);
 			}
 
-			if (libinput_event_tablet_axis_has_changed(
+			if (libinput_event_tablet_has_axis(
 				tablet_event,
 				LIBINPUT_TABLET_AXIS_TILT_X)) {
 				tilt_vertical =
@@ -474,7 +474,7 @@ START_TEST(normalization)
 				litest_assert_double_eq(tilt_vertical, 1);
 			}
 
-			if (libinput_event_tablet_axis_has_changed(
+			if (libinput_event_tablet_has_axis(
 				tablet_event,
 				LIBINPUT_TABLET_AXIS_TILT_Y)) {
 				tilt_horizontal =
