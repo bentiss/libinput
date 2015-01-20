@@ -1161,6 +1161,12 @@ litest_event_type_str(struct libinput_event *event)
 	case LIBINPUT_EVENT_TABLET_BUTTON:
 		str = "TABLET BUTTON";
 		break;
+	case LIBINPUT_EVENT_BUTTONSET_AXIS:
+		str = "BUTTONSET AXIS";
+		break;
+	case LIBINPUT_EVENT_BUTTONSET_BUTTON:
+		str = "BUTTONSET BUTTON";
+		break;
 	}
 	return str;
 }

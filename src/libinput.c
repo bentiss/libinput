@@ -90,6 +90,16 @@ struct libinput_event_tablet {
 	struct libinput_tool *tool;
 };
 
+struct libinput_event_buttonset {
+	struct libinput_event base;
+	uint32_t button;
+	enum libinput_button_state state;
+	uint32_t seat_button_count;
+	uint32_t time;
+	double axes[LIBINPUT_BUTTONSET_AXIS_MAX + 1];
+	unsigned char changed_axes[NCHARS(LIBINPUT_BUTTONSET_AXIS_MAX + 1)];
+};
+
 static void
 libinput_default_log_func(struct libinput *libinput,
 			  enum libinput_log_priority priority,
@@ -197,6 +207,8 @@ libinput_event_get_pointer_event(struct libinput_event *event)
 	case LIBINPUT_EVENT_TABLET_PROXIMITY_IN:
 	case LIBINPUT_EVENT_TABLET_PROXIMITY_OUT:
 	case LIBINPUT_EVENT_TABLET_BUTTON:
+	case LIBINPUT_EVENT_BUTTONSET_AXIS:
+	case LIBINPUT_EVENT_BUTTONSET_BUTTON:
 		break;
 	}
 
@@ -227,6 +239,8 @@ libinput_event_get_keyboard_event(struct libinput_event *event)
 	case LIBINPUT_EVENT_TABLET_PROXIMITY_IN:
 	case LIBINPUT_EVENT_TABLET_PROXIMITY_OUT:
 	case LIBINPUT_EVENT_TABLET_BUTTON:
+	case LIBINPUT_EVENT_BUTTONSET_AXIS:
+	case LIBINPUT_EVENT_BUTTONSET_BUTTON:
 		break;
 	}
 
@@ -257,6 +271,8 @@ libinput_event_get_touch_event(struct libinput_event *event)
 	case LIBINPUT_EVENT_TABLET_PROXIMITY_IN:
 	case LIBINPUT_EVENT_TABLET_PROXIMITY_OUT:
 	case LIBINPUT_EVENT_TABLET_BUTTON:
+	case LIBINPUT_EVENT_BUTTONSET_AXIS:
+	case LIBINPUT_EVENT_BUTTONSET_BUTTON:
 		break;
 	}
 
@@ -287,6 +303,9 @@ libinput_event_get_tablet_event(struct libinput_event *event)
 	case LIBINPUT_EVENT_TABLET_PROXIMITY_OUT:
 	case LIBINPUT_EVENT_TABLET_BUTTON:
 		return (struct libinput_event_tablet *) event;
+	case LIBINPUT_EVENT_BUTTONSET_AXIS:
+	case LIBINPUT_EVENT_BUTTONSET_BUTTON:
+		break;
 	}
 
 	return NULL;
@@ -315,7 +334,40 @@ libinput_event_get_device_notify_event(struct libinput_event *event)
 	case LIBINPUT_EVENT_TABLET_PROXIMITY_IN:
 	case LIBINPUT_EVENT_TABLET_PROXIMITY_OUT:
 	case LIBINPUT_EVENT_TABLET_BUTTON:
+	case LIBINPUT_EVENT_BUTTONSET_AXIS:
+	case LIBINPUT_EVENT_BUTTONSET_BUTTON:
 		break;
+	}
+
+	return NULL;
+}
+
+LIBINPUT_EXPORT struct libinput_event_buttonset *
+libinput_event_get_buttonset_event(struct libinput_event *event)
+{
+	switch (event->type) {
+	case LIBINPUT_EVENT_NONE:
+		abort(); /* not used as actual event type */
+	case LIBINPUT_EVENT_DEVICE_ADDED:
+	case LIBINPUT_EVENT_DEVICE_REMOVED:
+	case LIBINPUT_EVENT_KEYBOARD_KEY:
+	case LIBINPUT_EVENT_POINTER_MOTION:
+	case LIBINPUT_EVENT_POINTER_MOTION_ABSOLUTE:
+	case LIBINPUT_EVENT_POINTER_BUTTON:
+	case LIBINPUT_EVENT_POINTER_AXIS:
+	case LIBINPUT_EVENT_TOUCH_DOWN:
+	case LIBINPUT_EVENT_TOUCH_UP:
+	case LIBINPUT_EVENT_TOUCH_MOTION:
+	case LIBINPUT_EVENT_TOUCH_CANCEL:
+	case LIBINPUT_EVENT_TOUCH_FRAME:
+	case LIBINPUT_EVENT_TABLET_AXIS:
+	case LIBINPUT_EVENT_TABLET_PROXIMITY_IN:
+	case LIBINPUT_EVENT_TABLET_PROXIMITY_OUT:
+	case LIBINPUT_EVENT_TABLET_BUTTON:
+		break;
+	case LIBINPUT_EVENT_BUTTONSET_AXIS:
+	case LIBINPUT_EVENT_BUTTONSET_BUTTON:
+		return (struct libinput_event_buttonset *) event;
 	}
 
 	return NULL;
@@ -704,6 +756,48 @@ libinput_tool_unref(struct libinput_tool *tool)
 	list_remove(&tool->link);
 	free(tool);
 	return NULL;
+}
+
+LIBINPUT_EXPORT uint32_t
+libinput_event_buttonset_get_time(struct libinput_event_buttonset *event)
+{
+	return event->time;
+}
+
+LIBINPUT_EXPORT uint32_t
+libinput_event_buttonset_get_button(struct libinput_event_buttonset *event)
+{
+	return event->button;
+}
+
+LIBINPUT_EXPORT enum libinput_button_state
+libinput_event_buttonset_get_button_state(struct libinput_event_buttonset *event)
+{
+	return event->state;
+}
+
+LIBINPUT_EXPORT uint32_t
+libinput_event_buttonset_get_seat_button_count(struct libinput_event_buttonset *event)
+{
+	return event->seat_button_count;
+}
+
+LIBINPUT_EXPORT int
+libinput_event_buttonset_has_axis(struct libinput_event_buttonset *event,
+				  enum libinput_buttonset_axis axis)
+{
+	return (NCHARS(axis) <= sizeof(event->changed_axes)) ?
+		bit_is_set(event->changed_axes, axis) : 0;
+}
+
+LIBINPUT_EXPORT double
+libinput_event_buttonset_get_axis_value(struct libinput_event_buttonset *event,
+					enum libinput_buttonset_axis axis)
+{
+	if (event->base.type != LIBINPUT_EVENT_BUTTONSET_AXIS)
+		return 0;
+
+	return event->axes[axis];
 }
 
 struct libinput_source *

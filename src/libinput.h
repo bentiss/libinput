@@ -55,7 +55,14 @@ enum libinput_device_capability {
 	LIBINPUT_DEVICE_CAP_KEYBOARD = 0,
 	LIBINPUT_DEVICE_CAP_POINTER = 1,
 	LIBINPUT_DEVICE_CAP_TOUCH = 2,
-	LIBINPUT_DEVICE_CAP_TABLET = 3
+	LIBINPUT_DEVICE_CAP_TABLET = 3,
+	/**
+	 * A device with the @ref LIBINPUT_DEVICE_CAP_BUTTONSET capabilitiy
+	 * provides one or more buttons that are not mouse buttons and may
+	 * provide axes other than x and y axes. Such devices do usually not
+	 * move the pointer.
+	 */
+	LIBINPUT_DEVICE_CAP_BUTTONSET = 4
 };
 
 /**
@@ -148,6 +155,19 @@ enum libinput_tablet_axis {
 /**
  * @ingroup device
  *
+ * Available axis types for a buttonset device. It must have the @ref
+ * LIBINPUT_DEVICE_CAP_BUTTONSET capability.
+ */
+enum libinput_buttonset_axis {
+	LIBINPUT_BUTTONSET_AXIS_RING = 1,
+	LIBINPUT_BUTTONSET_AXIS_RING2 = 2,
+	LIBINPUT_BUTTONSET_AXIS_STRIP = 3,
+	LIBINPUT_BUTTONSET_AXIS_STRIP2 = 4,
+};
+
+/**
+ * @ingroup device
+ *
  * An object representing a tool being used by the device. It must have the @ref
  * LIBINPUT_DEVICE_CAP_TABLET capability.
  */
@@ -168,7 +188,13 @@ enum libinput_tool_type {
 	LIBINPUT_TOOL_AIRBRUSH,
 	LIBINPUT_TOOL_FINGER,
 	LIBINPUT_TOOL_MOUSE,
-	LIBINPUT_TOOL_LENS
+	LIBINPUT_TOOL_LENS,
+	/**
+	 * A button or series of buttons built into the tablet
+	 * or as a separate tool. This tool does not usually provide x/y
+	 * coordinates but may provide other axes such as absolute wheels.
+	 */
+	LIBINPUT_TOOL_BUTTONSET,
 };
 
 /**
@@ -221,6 +247,16 @@ enum libinput_event_type {
 	/**
 	 * Signals that a tool has come into proximity of a device with the @ref
 	 * LIBINPUT_DEVICE_CAP_TABLET capability.
+	 *
+	 * Some tools may always be in proximity. For these tools, the @ref
+	 * LIBINPUT_EVENT_TABLET_PROXIMITY_IN is sent only once after @ref
+	 * LIBINPUT_EVENT_DEVICE_ADDED, and likewise the @ref
+	 * LIBINPUT_EVENT_TABLET_PROXIMITY_OUT is sent only once before @ref
+	 * LIBINPUT_EVENT_DEVICE_REMOVED.
+	 *
+	 * If the tool that comes into proximity supports x/y coordinates,
+	 * libinput guarantees that both x and y are set in the proximity
+	 * event.
 	 */
 	LIBINPUT_EVENT_TABLET_PROXIMITY_IN,
 	/**
@@ -231,9 +267,18 @@ enum libinput_event_type {
 	 * are marked as released. Button release events for each button that
 	 * was held down on the stylus are sent before the initial proximity out
 	 * event.
+	 *
+	 * Some tools may always be in proximity. For these tools, the @ref
+	 * LIBINPUT_EVENT_TABLET_PROXIMITY_IN is sent only once after @ref
+	 * LIBINPUT_EVENT_DEVICE_ADDED, and likewise the @ref
+	 * LIBINPUT_EVENT_TABLET_PROXIMITY_OUT is sent only once before @ref
+	 * LIBINPUT_EVENT_DEVICE_REMOVED.
 	 */
 	LIBINPUT_EVENT_TABLET_PROXIMITY_OUT,
-	LIBINPUT_EVENT_TABLET_BUTTON
+	LIBINPUT_EVENT_TABLET_BUTTON,
+
+	LIBINPUT_EVENT_BUTTONSET_AXIS = 701,
+	LIBINPUT_EVENT_BUTTONSET_BUTTON,
 };
 
 /**
@@ -332,6 +377,16 @@ struct libinput_event_touch;
  * and @ref LIBINPUT_EVENT_TABLET_BUTTON.
  */
 struct libinput_event_tablet;
+
+/**
+ * @ingroup event_buttonset
+ * @struct libinput_event_buttonset
+ *
+ * Event representing a button press/release or axis update on a buttonset
+ * device. Valid event types for this event are @ref
+ * LIBINPUT_EVENT_BUTTONSET_AXIS and @ref LIBINPUT_EVENT_BUTTONSET_BUTTON.
+ */
+struct libinput_event_buttonset;
 
 /**
  * @defgroup event Accessing and destruction of events
@@ -454,6 +509,19 @@ libinput_event_get_tablet_event(struct libinput_event *event);
  */
 struct libinput_event_device_notify *
 libinput_event_get_device_notify_event(struct libinput_event *event);
+
+/**
+ * @ingroup event
+ *
+ * Return the buttonset event that is this input event. If the event type
+ * does not match the buttonset event types, this function returns NULL.
+ *
+ * The inverse of this function is libinput_event_buttonset_get_base_event().
+ *
+ * @return A touch event, or NULL for other events
+ */
+struct libinput_event_buttonset *
+libinput_event_get_buttonset_event(struct libinput_event *event);
 
 /**
  * @ingroup event
@@ -1213,6 +1281,114 @@ libinput_tool_get_user_data(struct libinput_tool *tool);
 void
 libinput_tool_set_user_data(struct libinput_tool *tool,
 			    void *user_data);
+
+
+/**
+ * @defgroup event_buttonset Events from button devices
+ *
+ * Events that come from button devices. Such devices provide one or more
+ * custom buttons (other than left, middle, right) and usually do not
+ * control the pointer. Axes other than x/y axes may be present on the
+ * device.
+ */
+
+/**
+ * @ingroup event_buttonset
+ *
+ * @return The event time for this event
+ */
+uint32_t
+libinput_event_buttonset_get_time(struct libinput_event_buttonset *event);
+
+/**
+ * @ingroup event_buttonset
+ *
+ * Checks if an axis was updated in this event or return 0 otherwise.
+ * For buttonset events that are not of type @ref LIBINPUT_EVENT_BUTTONSET_AXIS,
+ * this function returns 0.
+ *
+ * @note It is an application bug to call this function for events other than
+ * @ref LIBINPUT_EVENT_BUTTONSET_AXIS.
+ *
+ * @param event The libinput buttonset event
+ * @param axis The axis to check for updates
+ * @return 1 if the axis was updated or 0 otherwise
+ */
+int
+libinput_event_buttonset_has_axis(struct libinput_event_buttonset *event,
+				  enum libinput_buttonset_axis axis);
+
+/**
+ * @ingroup event_buttonset
+ *
+ * Return the axis value of a given axis for a buttonset. The interpretation
+ * of the value is dependent on the axis:
+ * - @ref LIBINPUT_BUTTONSET_AXIS_RING and @ref
+ *   LIBINPUT_BUTTONSET_AXIS_RING2 - normalized from 0 to 1 where 0 is the
+ *   ring's northernmost point in the device's current logical rotation,
+ *   increasing clockwise to 1 (the last value in a counterclockwise
+ *   direction from 0).
+ *
+ * @param event The libinput buttonset event
+ * @param axis The axis to retrieve the value of
+ * @return The current value of the the axis
+ */
+double
+libinput_event_buttonset_get_axis_value(struct libinput_event_buttonset *event,
+					enum libinput_buttonset_axis axis);
+
+/**
+ * @ingroup event_buttonset
+ *
+ * Return the button that triggered this event.
+ * For buttonset events that are not of type @ref LIBINPUT_EVENT_BUTTONSET_BUTTON, this
+ * function returns 0.
+ *
+ * @note It is an application bug to call this function for events other than
+ * @ref LIBINPUT_EVENT_BUTTONSET_BUTTON.
+ *
+ * @param event The libinput buttonset event
+ * @return the button triggering this event
+ */
+uint32_t
+libinput_event_buttonset_get_button(struct libinput_event_buttonset *event);
+
+/**
+ * @ingroup event_buttonset
+ *
+ * Return the button state of the event.
+ *
+ * @note It is an application bug to call this function for events other than
+ * @ref LIBINPUT_EVENT_BUTTONSET_BUTTON.
+ *
+ * @param event The libinput buttonset event
+ * @return the button state triggering this event
+ */
+enum libinput_button_state
+libinput_event_buttonset_get_button_state(struct libinput_event_buttonset *event);
+
+/**
+ * @ingroup event_buttonset
+ *
+ * For the button of a @ref LIBINPUT_EVENT_BUTTONSET_BUTTON event, return the total
+ * number of buttons pressed on all devices on the associated seat after the
+ * the event was triggered.
+ *
+ " @note It is an application bug to call this function for events other than
+ * @ref LIBINPUT_EVENT_BUTTONSET_BUTTON. For other events, this function returns 0.
+ *
+ * @return the seat wide pressed button count for the key of this event
+ */
+uint32_t
+libinput_event_buttonset_get_seat_button_count(struct libinput_event_buttonset *event);
+
+/**
+ * @ingroup event_buttonset
+ *
+ * @return The generic libinput_event of this event
+ */
+struct libinput_event *
+libinput_event_buttonset_get_base_event(struct libinput_event_buttonset *event);
 
 /**
  * @defgroup base Initialization and manipulation of libinput contexts

@@ -31,6 +31,7 @@
 #include "libinput-util.h"
 
 #define LIBINPUT_TABLET_AXIS_MAX LIBINPUT_TABLET_AXIS_TILT_Y
+#define LIBINPUT_BUTTONSET_AXIS_MAX LIBINPUT_BUTTONSET_AXIS_STRIP2
 
 struct libinput_source;
 

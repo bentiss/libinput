@@ -146,6 +146,14 @@ global:
 	libinput_tool_ref;
 	libinput_tool_set_user_data;
 	libinput_tool_unref;
+
+	libinput_event_buttonset_get_axis_value;
+	libinput_event_buttonset_get_button;
+	libinput_event_buttonset_get_button_state;
+	libinput_event_buttonset_get_seat_button_count;
+	libinput_event_buttonset_get_time;
+	libinput_event_buttonset_has_axis;
+	libinput_event_get_buttonset_event;
 } LIBINPUT_0.8.0;
 
 LIBINPUT_0.11.0 {

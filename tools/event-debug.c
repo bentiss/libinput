@@ -118,6 +118,12 @@ print_event_header(struct libinput_event *ev)
 	case LIBINPUT_EVENT_TABLET_BUTTON:
 		type = "TABLET_BUTTON";
 		break;
+	case LIBINPUT_EVENT_BUTTONSET_AXIS:
+		type = "BUTTONSET_AXIS";
+		break;
+	case LIBINPUT_EVENT_BUTTONSET_BUTTON:
+		type = "BUTTONSET_BUTTON";
+		break;
 	}
 
 	printf("%-7s	%s	", libinput_device_get_sysname(dev), type);
@@ -247,6 +253,60 @@ print_tablet_button_event(struct libinput_event *ev)
 	       state == LIBINPUT_BUTTON_STATE_PRESSED ? "pressed" : "released",
 	       libinput_event_tablet_get_seat_button_count(p));
 }
+
+static void
+print_buttonset_button_event(struct libinput_event *ev)
+{
+	struct libinput_event_buttonset *b = libinput_event_get_buttonset_event(ev);
+	enum libinput_button_state state;
+
+	print_event_time(libinput_event_buttonset_get_time(b));
+
+	state = libinput_event_buttonset_get_button_state(b);
+	printf("%3d %s, seat count: %u\n",
+	       libinput_event_buttonset_get_button(b),
+	       state == LIBINPUT_BUTTON_STATE_PRESSED ? "pressed" : "released",
+	       libinput_event_buttonset_get_seat_button_count(b));
+}
+
+static void
+print_buttonset_axis_event(struct libinput_event *ev)
+{
+	struct libinput_event_buttonset *b = libinput_event_get_buttonset_event(ev);
+	enum libinput_buttonset_axis axis = 0;
+	const char *axis_name;
+	double val;
+
+	print_event_time(libinput_event_buttonset_get_time(b));
+
+	while (++axis <= LIBINPUT_BUTTONSET_AXIS_STRIP2) {
+		if (!libinput_event_buttonset_has_axis(b, axis))
+			continue;
+
+		val = libinput_event_buttonset_get_axis_value(b, axis);
+		switch(axis) {
+		case LIBINPUT_BUTTONSET_AXIS_RING:
+			axis_name = "ring";
+			break;
+		case LIBINPUT_BUTTONSET_AXIS_RING2:
+			axis_name = "ring2";
+			break;
+		case LIBINPUT_BUTTONSET_AXIS_STRIP:
+			axis_name = "strip";
+			break;
+		case LIBINPUT_BUTTONSET_AXIS_STRIP2:
+			axis_name = "strip2";
+			break;
+		default:
+			axis_name = "UNKNOWN";
+			break;
+		}
+		printf("\t%s: %.2f", axis_name, val);
+	}
+
+	printf("\n");
+}
+
 
 static void
 print_pointer_axis_event(struct libinput_event *ev)
@@ -447,6 +507,12 @@ handle_and_print_events(struct libinput *li)
 			break;
 		case LIBINPUT_EVENT_TABLET_BUTTON:
 			print_tablet_button_event(ev);
+			break;
+		case LIBINPUT_EVENT_BUTTONSET_BUTTON:
+			print_buttonset_button_event(ev);
+			break;
+		case LIBINPUT_EVENT_BUTTONSET_AXIS:
+			print_buttonset_axis_event(ev);
 			break;
 		}
 
