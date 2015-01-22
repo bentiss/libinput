@@ -1324,10 +1324,11 @@ libinput_event_buttonset_has_axis(struct libinput_event_buttonset *event,
  * Return the axis value of a given axis for a buttonset. The interpretation
  * of the value is dependent on the axis:
  * - @ref LIBINPUT_BUTTONSET_AXIS_RING and @ref
- *   LIBINPUT_BUTTONSET_AXIS_RING2 - normalized from 0 to 1 where 0 is the
- *   ring's northernmost point in the device's current logical rotation,
- *   increasing clockwise to 1 (the last value in a counterclockwise
- *   direction from 0).
+ *   LIBINPUT_BUTTONSET_AXIS_RING2 - normalized to a range [0, 1[ where 0 is
+ *   the ring's northernmost point in the device's current logical rotation,
+ *   increasing clockwise to 1. The value 1 represents a full 360 degree
+ *   rotation and is thus identical to a value of 0, libinput will not
+ *   provide a value of 1 to the caller.
  *
  * @param event The libinput buttonset event
  * @param axis The axis to retrieve the value of
