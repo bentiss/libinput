@@ -30,10 +30,33 @@
 #define buttonset_unset_status(buttonset_,s_) (buttonset_)->status &= ~(s_)
 #define buttonset_has_status(buttonset_,s_) (!!((buttonset_)->status & (s_)))
 
-#define buttonset_get_pressed_buttons(buttonset_,field_) \
-       ((buttonset_)->button_state.field_ & ~((buttonset_)->prev_button_state.field_))
-#define buttonset_get_released_buttons(buttonset_,field_) \
-       ((buttonset_)->prev_button_state.field_ & ~((buttonset_)->button_state.field_))
+static unsigned long *
+buttonset_get_pressed_buttons(struct buttonset_dispatch *buttonset)
+{
+	struct button_state *state = &buttonset->button_state;
+	struct button_state *prev_state = &buttonset->prev_button_state;
+	unsigned int i;
+
+	for (i = 0; i < NLONGS(KEY_CNT); i++)
+		state->buttons_pressed[i] = state->buttons[i]
+						& ~(prev_state->buttons[i]);
+
+	return state->buttons_pressed;
+}
+
+static unsigned long *
+buttonset_get_released_buttons(struct buttonset_dispatch *buttonset)
+{
+	struct button_state *state = &buttonset->button_state;
+	struct button_state *prev_state = &buttonset->prev_button_state;
+	unsigned int i;
+
+	for (i = 0; i < NLONGS(KEY_CNT); i++)
+		state->buttons_pressed[i] = prev_state->buttons[i]
+						& ~(state->buttons[i]);
+
+	return state->buttons_pressed;
+}
 
 static void
 buttonset_process_absolute(struct buttonset_dispatch *buttonset,
@@ -154,69 +177,55 @@ buttonset_check_notify_axes(struct buttonset_dispatch *buttonset,
 }
 
 static void
-buttonset_update_button(struct buttonset_dispatch *buttonset,
-			uint32_t evcode,
-			uint32_t enable)
-{
-	uint32_t button, *mask;
-
-	/* XXX: This really depends on the expected buttons fitting in the mask */
-	if (evcode < BTN_MISC && evcode > BTN_TASK) {
-		log_info(buttonset->device->base.seat->libinput,
-			 "Unhandled button %s (%#x)\n",
-			 libevdev_event_code_get_name(EV_KEY, evcode), evcode);
-		return;
-	}
-
-	mask = &buttonset->button_state.buttons;
-	button = evcode - BTN_0;
-
-	assert(button < 32);
-
-	if (enable) {
-		(*mask) |= 1 << button;
-		buttonset_set_status(buttonset, BUTTONSET_BUTTONS_PRESSED);
-	} else {
-		(*mask) &= ~(1 << button);
-		buttonset_set_status(buttonset, BUTTONSET_BUTTONS_RELEASED);
-	}
-}
-
-static void
 buttonset_process_key(struct buttonset_dispatch *buttonset,
 		      struct evdev_device *device,
 		      struct input_event *e,
 		      uint32_t time)
 {
-	buttonset_update_button(buttonset, e->code, e->value);
+	uint32_t button = e->code;
+	uint32_t enable = e->value;
+
+
+	if (enable) {
+		long_set_bit(buttonset->button_state.buttons, button);
+		buttonset_set_status(buttonset, BUTTONSET_BUTTONS_PRESSED);
+	} else {
+		long_clear_bit(buttonset->button_state.buttons, button);
+		buttonset_set_status(buttonset, BUTTONSET_BUTTONS_RELEASED);
+	}
 }
 
 static void
 buttonset_notify_button_mask(struct buttonset_dispatch *buttonset,
 			     struct evdev_device *device,
 			     uint32_t time,
-			     uint32_t buttons,
-			     uint32_t button_base,
+			     unsigned long *buttons,
 			     enum libinput_button_state state)
 {
 	struct libinput_device *base = &device->base;
-	int32_t num_button = 0;
+	int32_t num_button;
+	unsigned int i;
 
-	while (buttons) {
-		int enabled;
+	for (i = 0; i < NLONGS(KEY_CNT); i++) {
+		unsigned long buttons_slice = buttons[i];
 
-		num_button++;
-		enabled = (buttons & 1);
-		buttons >>= 1;
+		num_button = i * LONG_BITS;
+		while (buttons_slice) {
+			int enabled;
 
-		if (!enabled)
-			continue;
+			num_button++;
+			enabled = (buttons_slice & 1);
+			buttons_slice >>= 1;
 
-		buttonset_notify_button(base,
-					time,
-					buttonset->axes,
-					num_button + button_base - 1,
-					state);
+			if (!enabled)
+				continue;
+
+			buttonset_notify_button(base,
+						time,
+						buttonset->axes,
+						num_button - 1,
+						state);
+		}
 	}
 }
 
@@ -226,18 +235,17 @@ buttonset_notify_buttons(struct buttonset_dispatch *buttonset,
 			 uint32_t time,
 			 enum libinput_button_state state)
 {
-	uint32_t buttons;
+	unsigned long *buttons;
 
 	if (state == LIBINPUT_BUTTON_STATE_PRESSED)
-		buttons = buttonset_get_pressed_buttons(buttonset, buttons);
+		buttons = buttonset_get_pressed_buttons(buttonset);
 	else
-		buttons = buttonset_get_released_buttons(buttonset, buttons);
+		buttons = buttonset_get_released_buttons(buttonset);
 
 	buttonset_notify_button_mask(buttonset,
 				     device,
 				     time,
 				     buttons,
-				     BTN_0,
 				     state);
 }
 

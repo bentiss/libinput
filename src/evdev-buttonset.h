@@ -40,7 +40,10 @@ enum buttonset_status {
 };
 
 struct button_state {
-	uint32_t buttons; /* bitmask of evcode - BTN_TOUCH */
+	/* Bitmask of pressed buttons. */
+	unsigned long buttons[NLONGS(KEY_CNT)];
+	unsigned long buttons_pressed[NLONGS(KEY_CNT)];
+	unsigned long buttons_released[NLONGS(KEY_CNT)];
 };
 
 struct buttonset_dispatch {
