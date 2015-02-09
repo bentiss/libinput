@@ -1370,6 +1370,15 @@ evdev_device_get_udev_tags(struct evdev_device *device,
 }
 
 static int
+evdev_are_siblings(struct evdev_device *device, struct evdev_device *other)
+{
+	enum evdev_device_udev_tags other_udev_tags;
+
+	other_udev_tags = evdev_device_get_udev_tags(other, other->udev_device);
+	return !!(other_udev_tags & EVDEV_UDEV_TAG_TABLET);
+}
+
+static int
 evdev_configure_device(struct evdev_device *device)
 {
 	struct libinput *libinput = device->base.seat->libinput;
@@ -1487,6 +1496,20 @@ evdev_configure_device(struct evdev_device *device)
 
 	if (udev_tags & EVDEV_UDEV_TAG_TABLET &&
 	    libevdev_has_event_type(evdev, EV_KEY)) {
+
+		struct libinput_device *dev;
+
+		list_for_each(dev, &device->base.seat->devices_list, link) {
+			struct evdev_device *other = (struct evdev_device*)dev;
+
+			if (evdev_are_siblings(device, other)) {
+				libinput_device_set_device_group(&device->base,
+					libinput_device_get_device_group(dev));
+				break;
+			}
+		}
+
+
 		if (!libevdev_has_event_code(device->evdev, EV_KEY, BTN_TOOL_FINGER) &&
 		    libevdev_has_event_code(device->evdev, EV_KEY, BTN_TOOL_PEN)) {
 			device->dispatch = evdev_tablet_create(device);
@@ -1688,11 +1711,17 @@ evdev_device_create(struct libinput_seat *seat,
 	if (!device->source)
 		goto err;
 
-	group = libinput_device_group_create();
-	if (!group)
-		goto err;
-	libinput_device_set_device_group(&device->base, group);
-	libinput_device_group_unref(group);
+	if (!device->base.group) {
+		group = libinput_device_group_create();
+		if (!group)
+			goto err;
+		libinput_device_set_device_group(&device->base, group);
+		libinput_device_group_unref(group);
+	} else {
+		log_info(libinput,
+			 "input device '%s', %s already belongs to group %p.\n",
+			 device->devname, devnode, device->base.group);
+	}
 
 	list_insert(seat->devices_list.prev, &device->base.link);
 
