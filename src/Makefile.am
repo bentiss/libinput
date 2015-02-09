@@ -10,6 +10,8 @@ libinput_la_SOURCES =			\
 	libinput-private.h		\
 	evdev.c				\
 	evdev.h				\
+	evdev-buttonset.c		\
+	evdev-buttonset.h		\
 	evdev-tablet.c			\
 	evdev-tablet.h			\
 	evdev-mt-touchpad.c		\

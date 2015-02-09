@@ -49,6 +49,7 @@ enum evdev_device_seat_capability {
 	EVDEV_DEVICE_KEYBOARD = (1 << 1),
 	EVDEV_DEVICE_TOUCH = (1 << 2),
 	EVDEV_DEVICE_TABLET = (1 << 3),
+	EVDEV_DEVICE_BUTTONSET = (1 << 4),
 };
 
 enum evdev_device_tags {
@@ -223,6 +224,9 @@ evdev_mt_touchpad_create(struct evdev_device *device);
 
 struct evdev_dispatch *
 evdev_tablet_create(struct evdev_device *device);
+
+struct evdev_dispatch *
+evdev_buttonset_create(struct evdev_device *device);
 
 void
 evdev_device_led_update(struct evdev_device *device, enum libinput_led leds);

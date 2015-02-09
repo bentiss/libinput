@@ -1582,6 +1582,65 @@ tablet_notify_button(struct libinput_device *device,
 			  &button_event->base);
 }
 
+void
+buttonset_notify_axis(struct libinput_device *device,
+		   uint32_t time,
+		   unsigned char *changed_axes,
+		   double *axes)
+{
+	struct libinput_event_buttonset *axis_event;
+
+	axis_event = zalloc(sizeof *axis_event);
+	if (!axis_event)
+		return;
+
+	*axis_event = (struct libinput_event_buttonset) {
+		.time = time,
+	};
+
+	memcpy(axis_event->changed_axes,
+	       changed_axes,
+	       sizeof(axis_event->changed_axes));
+	memcpy(axis_event->axes, axes, sizeof(axis_event->axes));
+
+	post_device_event(device,
+			  time,
+			  LIBINPUT_EVENT_BUTTONSET_AXIS,
+			  &axis_event->base);
+}
+
+void
+buttonset_notify_button(struct libinput_device *device,
+			uint32_t time,
+			double *axes,
+			int32_t button,
+			enum libinput_button_state state)
+{
+	struct libinput_event_buttonset *button_event;
+	int32_t seat_button_count;
+
+	button_event = zalloc(sizeof *button_event);
+	if (!button_event)
+		return;
+
+	seat_button_count = update_seat_button_count(device->seat,
+						     button,
+						     state);
+
+	*button_event = (struct libinput_event_buttonset) {
+		.time = time,
+		.button = button,
+		.state = state,
+		.seat_button_count = seat_button_count,
+	};
+	memcpy(button_event->axes, axes, sizeof(button_event->axes));
+
+	post_device_event(device,
+			  time,
+			  LIBINPUT_EVENT_BUTTONSET_BUTTON,
+			  &button_event->base);
+}
+
 static void
 libinput_post_event(struct libinput *libinput,
 		    struct libinput_event *event)

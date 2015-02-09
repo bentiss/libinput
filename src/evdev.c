@@ -1486,13 +1486,29 @@ evdev_configure_device(struct evdev_device *device)
 	}
 
 	if (udev_tags & EVDEV_UDEV_TAG_TABLET &&
-	    libevdev_has_event_type(evdev, EV_KEY) &&
-	    !libevdev_has_event_code(device->evdev, EV_KEY, BTN_TOOL_FINGER) &&
-	    libevdev_has_event_code(device->evdev, EV_KEY, BTN_TOOL_PEN)) {
-		device->dispatch = evdev_tablet_create(device);
-		device->seat_caps |= EVDEV_DEVICE_TABLET;
+	    libevdev_has_event_type(evdev, EV_KEY)) {
+		if (!libevdev_has_event_code(device->evdev, EV_KEY, BTN_TOOL_FINGER) &&
+		    libevdev_has_event_code(device->evdev, EV_KEY, BTN_TOOL_PEN)) {
+			device->dispatch = evdev_tablet_create(device);
+			device->seat_caps |= EVDEV_DEVICE_TABLET;
+			log_info(libinput,
+				 "input device '%s', %s is a tablet\n",
+				 device->devname, devnode);
+			return device->dispatch == NULL ? -1 : 0;
+		} else if (libevdev_has_event_code(device->evdev, EV_KEY, BTN_TOOL_FINGER) &&
+			   !libevdev_has_event_code(device->evdev, EV_KEY, BTN_TOOL_PEN)) {
+			device->dispatch = evdev_mt_touchpad_create(device);
+			log_info(libinput,
+				 "input device '%s', %s is a touchpad on a tablet\n",
+				 device->devname, devnode);
+			return device->dispatch == NULL ? -1 : 0;
+		}
+
+		/* the rest are buttonsets */
+		device->dispatch = evdev_buttonset_create(device);
+		device->seat_caps |= EVDEV_DEVICE_BUTTONSET;
 		log_info(libinput,
-			 "input device '%s', %s is a tablet\n",
+			 "input device '%s', %s is a buttonset on a tablet\n",
 			 device->devname, devnode);
 		return device->dispatch == NULL ? -1 : 0;
 	}

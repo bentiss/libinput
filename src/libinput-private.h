@@ -373,6 +373,19 @@ void
 touch_notify_frame(struct libinput_device *device,
 		   uint64_t time);
 
+void
+buttonset_notify_axis(struct libinput_device *device,
+		      uint32_t time,
+		      unsigned char *changed_axes,
+		      double *axes);
+
+void
+buttonset_notify_button(struct libinput_device *device,
+			uint32_t time,
+			double *axes,
+			int32_t button,
+			enum libinput_button_state state);
+
 static inline uint64_t
 libinput_now(struct libinput *libinput)
 {
