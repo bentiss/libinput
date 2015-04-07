@@ -303,6 +303,20 @@ create_pointer_accelerator_filter(accel_profile_func_t profile)
 	return &filter->base;
 }
 
+static double
+accel_profile_linear(double speed_in,
+		     const double max_accel,
+		     const double threshold,
+		     const double incline)
+{
+	double s1, s2;
+
+	s1 = min(1, speed_in * 5);
+	s2 = 1 + (speed_in - threshold) * incline;
+
+	return min(max_accel, s2 > 1 ? s2 : s1);
+}
+
 double
 pointer_accel_profile_linear(struct motion_filter *filter,
 			     void *data,
@@ -312,15 +326,11 @@ pointer_accel_profile_linear(struct motion_filter *filter,
 	struct pointer_accelerator *accel_filter =
 		(struct pointer_accelerator *)filter;
 
-	double s1, s2;
 	const double max_accel = accel_filter->accel; /* unitless factor */
 	const double threshold = accel_filter->threshold; /* units/ms */
 	const double incline = accel_filter->incline;
 
-	s1 = min(1, speed_in * 5);
-	s2 = 1 + (speed_in - threshold) * incline;
-
-	return min(max_accel, s2 > 1 ? s2 : s1);
+	return accel_profile_linear(speed_in, max_accel, threshold, incline);
 }
 
 double
