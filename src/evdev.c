@@ -1463,6 +1463,17 @@ evdev_fix_android_mt(struct evdev_device *device)
 		      libevdev_get_abs_info(evdev, ABS_MT_POSITION_Y));
 }
 
+static inline void
+evdev_fix_x230_res(struct evdev_device *device)
+{
+	struct libevdev *evdev = device->evdev;
+
+	/* ugly hack while EV_ABS_OVERRIDE is merged in udev */
+
+	if (device->model_lenovo_x230)
+		libevdev_set_abs_resolution(evdev, ABS_Y, 100);
+}
+
 static inline int
 evdev_check_min_max(struct evdev_device *device, unsigned int code)
 {
@@ -1653,6 +1664,8 @@ evdev_configure_device(struct evdev_device *device)
 		evdev_fix_android_mt(device);
 
 	if (libevdev_has_event_code(evdev, EV_ABS, ABS_X)) {
+		evdev_fix_x230_res(device);
+
 		if (evdev_fix_abs_resolution(device,
 					     ABS_X,
 					     ABS_Y,
