@@ -6,4 +6,6 @@ libinput_device_group_CFLAGS = $(LIBUDEV_CFLAGS) $(GCC_CFLAGS)
 libinput_device_group_LDADD = $(LIBUDEV_LIBS)
 
 udev_rulesdir=$(UDEV_DIR)/rules.d
-dist_udev_rules_DATA = 80-libinput-device-groups.rules
+dist_udev_rules_DATA = \
+	80-libinput-device-groups.rules \
+	99-x230.rules

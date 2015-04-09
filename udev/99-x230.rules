@@ -1,0 +1,14 @@
+ACTION!="add|change", GOTO="x230_touchpad_quirks_end"
+KERNEL!="event*", GOTO="x230_touchpad_quirks_end"
+
+ENV{ID_INPUT_TOUCHPAD}!="1", GOTO="x230_touchpad_quirks_end"
+
+# model specific quirks
+
+# Lenovo X230 have a special touchpad with a low resolution
+
+ATTR{[dmi/id]product_version}=="ThinkPad X230*", \
+  ENV{ID_PATH}=="platform-i8042-serio-*", \
+  ENV{LIBINPUT_MODEL_LENOVO_X230}="1"
+
+LABEL="x230_touchpad_quirks_end"
