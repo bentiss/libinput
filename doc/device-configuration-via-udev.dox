@@ -57,6 +57,15 @@ See @ref motion_normalization for details.
 <dd>The angle in degrees for each click on a mouse wheel. See
 libinput_pointer_get_axis_source() for details.
 </dd>
+<dt>LIBINPUT_MODEL_LENOVO_X230</dt>
+<dd><b>Do not use for anything except a Lenovo X230 series</b> (you have been
+warned).
+This flag allows libinput to apply a different acceleration profile for the
+touchpads of this series of laptops to counter a hardware deficiency. It may
+also be use to tune other parts of the inputs of these laptops, so the effects
+of this property may change anytime and will be only tested against the
+mentioned laptop series.
+</dd>
 </dl>
 
 Below is an example udev rule to assign "seat1" to a device from vendor

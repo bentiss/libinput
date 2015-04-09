@@ -1343,6 +1343,13 @@ evdev_read_dpi_prop(struct evdev_device *device)
 	return dpi;
 }
 
+static inline int
+evdev_read_model_lenovo_x230_prop(struct evdev_device *device)
+{
+	return !!udev_device_get_property_value(device->udev_device,
+						"LIBINPUT_MODEL_LENOVO_X230");
+}
+
 /* Return 1 if the given resolutions have been set, or 0 otherwise */
 inline int
 evdev_fix_abs_resolution(struct evdev_device *device,
@@ -1853,6 +1860,7 @@ evdev_device_create(struct libinput_seat *seat,
 	device->scroll.wheel_click_angle =
 		evdev_read_wheel_click_prop(device);
 	device->dpi = evdev_read_dpi_prop(device);
+	device->model_lenovo_x230 = evdev_read_model_lenovo_x230_prop(device);
 	/* at most 5 SYN_DROPPED log-messages per 30s */
 	ratelimit_init(&device->syn_drop_limit, 30ULL * 1000, 5);
 

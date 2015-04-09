@@ -160,6 +160,8 @@ struct evdev_device {
 
 	int dpi; /* HW resolution */
 	struct ratelimit syn_drop_limit; /* ratelimit for SYN_DROPPED logging */
+
+	int model_lenovo_x230; /* Specific tuning for the X230 */
 };
 
 #define EVDEV_UNHANDLED_DEVICE ((struct evdev_device *) 1)

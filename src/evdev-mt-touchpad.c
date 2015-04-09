@@ -998,7 +998,9 @@ tp_init_accel(struct tp_dispatch *tp, double diagonal)
 
 	if (evdev_device_init_pointer_acceleration(
                                        tp->device,
-                                       touchpad_accel_profile_linear) == -1)
+                                       tp->device->model_lenovo_x230 ?
+                                               touchpad_lenovo_x230_accel_profile :
+                                               touchpad_accel_profile_linear) == -1)
 		return -1;
 
 	return 0;

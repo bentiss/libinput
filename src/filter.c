@@ -353,3 +353,36 @@ touchpad_accel_profile_linear(struct motion_filter *filter,
 
 	return speed_out * TP_MAGIC_SLOWDOWN;
 }
+
+double
+touchpad_lenovo_x230_accel_profile(struct motion_filter *filter,
+				      void *data,
+				      double speed_in,
+				      uint64_t time)
+{
+	/* Keep the magic factor from touchpad_accel_profile_linear.  */
+	const double TP_MAGIC_SLOWDOWN = 0.4;
+
+	/* Those touchpads presents an actual lower resolution that what is
+	 * advertised. We see some jumps from the cursor due to the big steps
+	 * in X and Y when we are receiving data.
+	 * Apply a factor to minimize those jumps at low speed, and try
+	 * keeping the same feeling as regular touchpads at high speed.
+	 * It still feels slower but it is usable at least */
+	const double TP_MAGIC_LOW_RES_FACTOR = 4.0;
+	double speed_out;
+	struct pointer_accelerator *accel_filter =
+		(struct pointer_accelerator *)filter;
+
+	const double max_accel = accel_filter->accel *
+				  TP_MAGIC_LOW_RES_FACTOR; /* unitless factor */
+	const double threshold = accel_filter->threshold /
+				  TP_MAGIC_LOW_RES_FACTOR; /* units/ms */
+	const double incline = accel_filter->incline * TP_MAGIC_LOW_RES_FACTOR;
+
+	speed_in *= TP_MAGIC_SLOWDOWN / TP_MAGIC_LOW_RES_FACTOR;
+
+	speed_out = accel_profile_linear(speed_in, max_accel, threshold, incline);
+
+	return speed_out * TP_MAGIC_SLOWDOWN / TP_MAGIC_LOW_RES_FACTOR;
+}
