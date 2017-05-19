@@ -72,13 +72,18 @@ lid_switch_keyboard_event(uint64_t time,
 		(void)write(fd, ev, sizeof(ev));
 		/* In case write() fails, we sync the lid state manually
 		 * regardless. */
-	}
+	} else {
+		/* no need to update dispatch->lid_is_closed or toggle the
+		 * switch notify in the RELIABILITY_WRITE_OPEN case,
+		 * it will be done while processing the EV_SW event we just
+		 * wrote. */
 
-	dispatch->lid_is_closed = false;
-	switch_notify_toggle(&dispatch->device->base,
-			     time,
-			     LIBINPUT_SWITCH_LID,
-			     dispatch->lid_is_closed);
+		dispatch->lid_is_closed = false;
+		switch_notify_toggle(&dispatch->device->base,
+				     time,
+				     LIBINPUT_SWITCH_LID,
+				     dispatch->lid_is_closed);
+	}
 }
 
 static void
