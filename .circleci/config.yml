@@ -3,12 +3,12 @@ libinput_references:
   default_settings: &default_settings
     working_directory: ~/libinput
   build_and_test: &build_and_test
-    run:
-      name: Build
-      command: |
-        meson build --prefix=/opt/libinput
-        mesonconf build
-        ninja -v -C build
+    name: Build
+    command: |
+      rm -rf build
+      meson build ${MESON_PARAMS}
+      mesonconf build
+      ninja -v -C build
   install: &install
     run:
       name: Installing
@@ -16,38 +16,6 @@ libinput_references:
   export_logs: &export_logs
     store_artifacts:
       path: ~/libinput/build/meson-logs
-  build_no_libwacom: &build_no_libwacom
-    run:
-      name: Build without libwacom
-      command: |
-        rm -rf build
-        meson -Dlibwacom=false build
-        mesonconf build
-        ninja -v -C build
-  build_no_debug_gui: &build_no_debug_gui
-    run:
-      name: Build without debug-gui
-      command: |
-        rm -rf build
-        meson -Ddebug-gui=false build
-        mesonconf build
-        ninja -v -C build
-  build_no_tests: &build_no_tests
-    run:
-      name: Build without tests
-      command: |
-        rm -rf build
-        meson -Dtests=false build
-        mesonconf build
-        ninja -v -C build
-  build_no_documentation: &build_no_documentation
-    run:
-      name: Build without documentation
-      command: |
-        rm -rf build
-        meson -Ddocumentation=false build
-        mesonconf build
-        ninja -v -C build
 
 fedora_settings: &fedora_settings
   <<: *default_settings
@@ -57,13 +25,32 @@ fedora_settings: &fedora_settings
         command: |
           dnf install -y git gcc gcc-c++ meson check-devel libudev-devel libevdev-devel doxygen graphviz valgrind binutils libwacom-devel cairo-devel gtk3-devel glib2-devel mtdev-devel
     - checkout
-    - *build_and_test
+    - run:
+        <<: *build_and_test
+        environment:
+          MESON_PARAMS: --prefix=/opt/libinput
     - *install
     - *export_logs
-    - *build_no_libwacom
-    - *build_no_debug_gui
-    - *build_no_documentation
-    - *build_no_tests
+    - run:
+        <<: *build_and_test
+        name: Build - No Wacom
+        environment:
+          MESON_PARAMS: -Dlibwacom=false
+    - run:
+        <<: *build_and_test
+        name: Build - No Gui
+        environment:
+          MESON_PARAMS: -Ddebug-gui=false
+    - run:
+        <<: *build_and_test
+        name: Build - No tests
+        environment:
+          MESON_PARAMS: -Dtests=false
+    - run:
+        <<: *build_and_test
+        name: Build - No Docs
+        environment:
+          MESON_PARAMS: -Ddocumentation=false
 
 version: 2
 jobs:
