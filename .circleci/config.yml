@@ -16,17 +16,54 @@ libinput_references:
   export_logs: &export_logs
     store_artifacts:
       path: ~/libinput/build/meson-logs
+  build_no_libwacom: &build_no_libwacom
+    run:
+      name: Build without libwacom
+      command: |
+        rm -rf build
+        meson -Dlibwacom=false build
+        mesonconf build
+        ninja -v -C build
+  build_no_debug_gui: &build_no_debug_gui
+    run:
+      name: Build without debug-gui
+      command: |
+        rm -rf build
+        meson -Ddebug-gui=false build
+        mesonconf build
+        ninja -v -C build
+  build_no_tests: &build_no_tests
+    run:
+      name: Build without tests
+      command: |
+        rm -rf build
+        meson -Dtests=false build
+        mesonconf build
+        ninja -v -C build
+  build_no_documentation: &build_no_documentation
+    run:
+      name: Build without documentation
+      command: |
+        rm -rf build
+        meson -Ddocumentation=false build
+        mesonconf build
+        ninja -v -C build
 
 fedora_settings: &fedora_settings
   <<: *default_settings
   steps:
-    - run: 
+    - run:
         name: Install prerequisites
-        command: dnf install -y git gcc gcc-c++ meson check-devel libudev-devel libevdev-devel doxygen graphviz valgrind binutils libwacom-devel cairo-devel gtk3-devel glib2-devel mtdev-devel
+        command: |
+          dnf install -y git gcc gcc-c++ meson check-devel libudev-devel libevdev-devel doxygen graphviz valgrind binutils libwacom-devel cairo-devel gtk3-devel glib2-devel mtdev-devel
     - checkout
     - *build_and_test
     - *install
     - *export_logs
+    - *build_no_libwacom
+    - *build_no_debug_gui
+    - *build_no_documentation
+    - *build_no_tests
 
 version: 2
 jobs:
