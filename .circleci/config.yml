@@ -2,13 +2,15 @@
 libinput_references:
   default_settings: &default_settings
     working_directory: ~/libinput
-  build_and_test: &build_and_test
+  build_and_test_default: &build_and_test_default
     name: Build
     command: |
       rm -rf build
       meson build ${MESON_PARAMS}
       mesonconf build
       ninja -v -C build
+    environment:
+      MESON_PARAMS: --prefix=/opt/libinput
   install: &install
     run:
       name: Installing
@@ -16,6 +18,33 @@ libinput_references:
   export_logs: &export_logs
     store_artifacts:
       path: ~/libinput/build/meson-logs
+  build_and_test: &build_and_test
+    run:
+      <<: *build_and_test_default
+  build_no_wacom: &build_no_wacom
+    run:
+      <<: *build_and_test_default
+      name: Build - No Wacom
+      environment:
+        MESON_PARAMS: -Dlibwacom=false
+  build_no_gui: &build_no_gui
+    run:
+      <<: *build_and_test_default
+      name: Build - No Gui
+      environment:
+        MESON_PARAMS: -Ddebug-gui=false
+  build_no_tests: &build_no_tests
+    run:
+      <<: *build_and_test_default
+      name: Build - No tests
+      environment:
+        MESON_PARAMS: -Dtests=false
+  build_no_docs: &build_no_docs
+    run:
+      <<: *build_and_test_default
+      name: Build - No Docs
+      environment:
+        MESON_PARAMS: -Ddocumentation=false
 
 fedora_settings: &fedora_settings
   <<: *default_settings
@@ -25,32 +54,13 @@ fedora_settings: &fedora_settings
         command: |
           dnf install -y git gcc gcc-c++ meson check-devel libudev-devel libevdev-devel doxygen graphviz valgrind binutils libwacom-devel cairo-devel gtk3-devel glib2-devel mtdev-devel
     - checkout
-    - run:
-        <<: *build_and_test
-        environment:
-          MESON_PARAMS: --prefix=/opt/libinput
+    - *build_and_test
     - *install
     - *export_logs
-    - run:
-        <<: *build_and_test
-        name: Build - No Wacom
-        environment:
-          MESON_PARAMS: -Dlibwacom=false
-    - run:
-        <<: *build_and_test
-        name: Build - No Gui
-        environment:
-          MESON_PARAMS: -Ddebug-gui=false
-    - run:
-        <<: *build_and_test
-        name: Build - No tests
-        environment:
-          MESON_PARAMS: -Dtests=false
-    - run:
-        <<: *build_and_test
-        name: Build - No Docs
-        environment:
-          MESON_PARAMS: -Ddocumentation=false
+    - *build_no_wacom
+    - *build_no_gui
+    - *build_no_tests
+    - *build_no_docs
 
 version: 2
 jobs:
