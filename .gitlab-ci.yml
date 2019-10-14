@@ -43,6 +43,10 @@ include:
 stages:
   - container_prep   # rebuild the container images if there is a change
   - build            # for actually building things
+  - arch             # Arch Linux distribs test
+  - fedora           # fedora distribs test
+  - freeBSD          # freeBSD distribs test
+  - ubuntu           # ubuntu distribs test
   - deploy           # trigger wayland's website generation
   - container_clean  # clean up unused container images
 
@@ -449,18 +453,21 @@ fedora:30@test-suite-vm-valgrind:
   image: $FEDORA_CONTAINER_IMAGE
 
 fedora:29@default-build:
+  stage: fedora
   extends: .fedora-build@template
   variables:
     FEDORA_VERSION: 29
   needs: ['fedora:29@container-prep']
 
 fedora:30@default-build:
+  stage: fedora
   extends: .fedora-build@template
   variables:
     FEDORA_VERSION: 30
   needs: ['fedora:30@container-prep']
 
 fedora:30@default-build-release:
+  stage: fedora
   extends: .fedora-build@template
   variables:
     FEDORA_VERSION: 30
@@ -588,6 +595,7 @@ fedora:30@flake8:
 #
 
 .ubuntu@template:
+  stage: ubuntu
   extends: .build@template
   image: $UBUNTU_CONTAINER_IMAGE
 
@@ -607,6 +615,7 @@ ubuntu:19.04@default-build:
 # Arch
 #
 .arch@template:
+  stage: arch
   extends: .build@template
   image: $ARCH_CONTAINER_IMAGE
 
@@ -618,6 +627,7 @@ arch:rolling@default-build:
 # FreeBSD
 #
 .freebsd@template:
+  stage: freeBSD
   extends: .build@template
   image: $FREEBSD_CONTAINER_IMAGE
   variables:
